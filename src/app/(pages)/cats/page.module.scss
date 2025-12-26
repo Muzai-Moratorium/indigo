@@ -1,0 +1,83 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f0f0f0;
+}
+
+.title {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.selectContainer {
+  margin-bottom: 20px;
+  width: 640px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.select {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 2px solid #333;
+  border-radius: 5px;
+  background-color: white;
+}
+
+.videoWrapper {
+  position: relative;
+  width: 640px;
+  height: 640px;
+  border: 2px solid #333;
+  background-color: black;
+}
+
+.statusOverlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  z-index: 10;
+}
+
+.statusConnected {
+  background-color: green;
+}
+
+.statusDisconnected {
+  background-color: red;
+}
+
+.videoElement {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.canvasElement {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.backLink {
+  margin-top: 20px;
+  text-decoration: none;
+  color: #0070f3;
+  font-weight: bold;
+}
