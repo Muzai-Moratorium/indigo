@@ -14,21 +14,99 @@ router = APIRouter()
 # ============================================
 CAPTURE_DIR = "captures"
 os.makedirs(CAPTURE_DIR, exist_ok=True)
-last_capture_time = 0
-CAPTURE_COOLDOWN = 10
+
+# ============================================
+# 배회자 감지 설정
+# ============================================
+LOITERING_TIME = 7.0  # 배회 기준 시간 (초)
+TRACKER_TIMEOUT = 5.0  # 트래커 만료 시간 (초)
+active_trackers = {}  # {track_id: {"start_time": float, "last_seen": float, "notified": bool, "box": list}}
+next_track_id = 0
+
+def get_box_center(box):
+    """박스 중심점 계산"""
+    x1, y1, x2, y2 = box
+    return ((x1 + x2) / 2, (y1 + y2) / 2)
+
+def calculate_iou(box1, box2):
+    """두 박스의 IoU 계산"""
+    x1 = max(box1[0], box2[0])
+    y1 = max(box1[1], box2[1])
+    x2 = min(box1[2], box2[2])
+    y2 = min(box1[3], box2[3])
+    
+    intersection = max(0, x2 - x1) * max(0, y2 - y1)
+    area1 = (box1[2] - box1[0]) * (box1[3] - box1[1])
+    area2 = (box2[2] - box2[0]) * (box2[3] - box2[1])
+    union = area1 + area2 - intersection
+    
+    return intersection / union if union > 0 else 0
+
+def match_detection_to_tracker(box):
+    """감지된 박스를 기존 트래커와 매칭"""
+    global next_track_id
+    
+    best_match_id = None
+    best_iou = 0.3  # 최소 IoU 임계값
+    
+    for track_id, tracker in active_trackers.items():
+        iou = calculate_iou(box, tracker["box"])
+        if iou > best_iou:
+            best_iou = iou
+            best_match_id = track_id
+    
+    if best_match_id is not None:
+        return best_match_id
+    else:
+        # 새 트래커 생성
+        new_id = next_track_id
+        next_track_id += 1
+        return new_id
+
+def check_loitering(track_id, box, frame, score):
+    """배회자 체크 및 알림"""
+    now = time.time()
+    
+    if track_id not in active_trackers:
+        # 새로운 사람 감지
+        active_trackers[track_id] = {
+            "start_time": now,
+            "last_seen": now,
+            "notified": False,
+            "box": box
+        }
+        print(f"👤 [추적] 새로운 사람 감지 (ID: {track_id})")
+    else:
+        tracker = active_trackers[track_id]
+        tracker["last_seen"] = now
+        tracker["box"] = box
+        
+        # 배회 판정: 설정 시간 이상 머물렀고, 아직 알림 안 보냄
+        elapsed = now - tracker["start_time"]
+        if not tracker["notified"] and elapsed >= LOITERING_TIME:
+            print(f"⚠️ [배회자 감지] ID: {track_id} - {elapsed:.1f}초 체류!")
+            save_snapshot(frame, score, box, is_loitering=True)
+            # TODO: send_kakao_message() 호출
+            tracker["notified"] = True
+
+def cleanup_old_trackers():
+    """오래된 트래커 정리"""
+    now = time.time()
+    expired = [tid for tid, t in active_trackers.items() if now - t["last_seen"] > TRACKER_TIMEOUT]
+    for tid in expired:
+        elapsed = active_trackers[tid]["last_seen"] - active_trackers[tid]["start_time"]
+        print(f"👋 [이탈] ID: {tid} - 총 체류시간: {elapsed:.1f}초")
+        del active_trackers[tid]
 
 # ============================================
 # YOLOv8 모델 로드 (CPU 최적화)
 # ============================================
 sess_options = ort.SessionOptions()
-sess_options.intra_op_num_threads = 4  # CPU 스레드 수 조정
+sess_options.intra_op_num_threads = 4
 sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
-# GPU 사용 시도 (없으면 CPU 자동 사용)
 providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
 
-# Calculate the absolute path to the model file
-# backend/app/routers/cats.py -> .../backend/
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MODEL_PATH = os.path.join(BASE_DIR, "artifacts", "yolov8n.onnx")
 
@@ -54,7 +132,7 @@ CLASSES = [
     "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"
 ]
 
-def save_to_database(image_path, score):
+def save_to_database(image_path, score, is_loitering=False):
     try:
         connection = mysql.connector.connect(
             host="localhost",
@@ -73,7 +151,8 @@ def save_to_database(image_path, score):
             current_time = datetime.now()
             cursor.execute(sql_query, (image_path, float(score), current_time))
             connection.commit()
-            print(f"[MySQL] DB 저장 완료: {image_path}, 신뢰도: {score:.2f}")
+            event_type = "배회자" if is_loitering else "일반"
+            print(f"[MySQL] DB 저장 완료 ({event_type}): {image_path}, 신뢰도: {score:.2f}")
 
     except mysql.connector.Error as e:
         print(f"[MySQL Error] {e}")
@@ -82,18 +161,14 @@ def save_to_database(image_path, score):
             cursor.close()
             connection.close()
 
-def save_snapshot(frame, score, box=None):
+def save_snapshot(frame, score, box=None, is_loitering=False):
     """감지된 영역만 크롭하여 저장"""
-    global last_capture_time
-    current_time = time.time()
-
-    if current_time - last_capture_time < CAPTURE_COOLDOWN:
-        return
-
     now = datetime.now()
     timestamp_file = now.strftime("%Y년%m월%d일_%H시%M분%S초")
     timestamp_display = now.strftime("%Y년 %m월 %d일 %H시 %M분 %S초")
-    filename = f"person_{timestamp_file}.jpg"
+    
+    prefix = "loitering" if is_loitering else "person"
+    filename = f"{prefix}_{timestamp_file}.jpg"
     filepath = os.path.join(CAPTURE_DIR, filename)
 
     # 박스 정보가 있으면 해당 영역만 크롭
@@ -127,9 +202,10 @@ def save_snapshot(frame, score, box=None):
     else:
         cv2.imwrite(filepath, frame)
     
-    print(f"📸 [캡처] 사람 감지! 이미지 저장: {filename} | 신뢰도: {score:.2f} | 시간: {timestamp_display}")
-    save_to_database(filepath, score)
-    last_capture_time = current_time
+    event_type = "⚠️ 배회자" if is_loitering else "📸 사람"
+    print(f"{event_type} 캡처! 이미지 저장: {filename} | 신뢰도: {score:.2f} | 시간: {timestamp_display}")
+    save_to_database(filepath, score, is_loitering)
+
 
 # ============================================
 # 전처리 (최적화)
@@ -168,15 +244,6 @@ def postprocess(output, conf_threshold=0.25, iou_threshold=0.5):
             cx, cy, w, h = row[0], row[1], row[2], row[3]
             x1 = int(cx - w / 2)
             y1 = int(cy - h / 2)
-            w = int(w)
-            h = int(w)
-            # wait, original code used w = int(w), h=int(h) which reassigns input w,h which were float.
-            # let's stick to original logic carefully.
-            # original: 
-            # cx, cy, w, h = row[0], row[1], row[2], row[3]
-            # x1 = int(cx - w / 2) ...
-            # w = int(w)
-            
             w_int = int(w)
             h_int = int(h)
             
@@ -249,14 +316,21 @@ async def websocket_endpoint(ws: WebSocket):
                     fps = frame_count / elapsed
                     print(f"FPS: {fps:.1f} | Inference: {inference_time:.1f}ms")
 
-                # 스냅샷 저장 (신뢰도 0.5 이상, 감지 영역만 크롭)
+                # 배회자 추적 (모든 감지된 사람에 대해)
                 for pred in predictions:
                     if pred['label'] == 'person' and pred['score'] >= 0.5:
-                        save_snapshot(frame, pred['score'], pred['box'])
-                        break
+                        box = pred['box']
+                        track_id = match_detection_to_tracker(box)
+                        check_loitering(track_id, box, frame, pred['score'])
+                
+                # 오래된 트래커 정리
+                cleanup_old_trackers()
 
-                # 결과 전송
-                await ws.send_json({"predictions": predictions})
+                # 결과 전송 (트래커 수 포함)
+                await ws.send_json({
+                    "predictions": predictions,
+                    "active_trackers": len(active_trackers)
+                })
 
             except Exception as e:
                 print(f"Error during processing: {e}")

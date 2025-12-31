@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routers import auth, cats
+from app.routers import auth, cats, kakao
 from app.database import init_db
 from pathlib import Path
 
-app = FastAPI()
+app = FastAPI(title="Home Protect API", description="배회자 감지 및 알림 시스템")
 
 # Database Initialization
 init_db()
@@ -27,6 +27,7 @@ app.mount("/captures", StaticFiles(directory=str(CAPTURES_DIR)), name="captures"
 # Include Routers
 app.include_router(cats.router)
 app.include_router(auth.router)
+app.include_router(kakao.router)
 
 @app.get("/")
 def read_root():
