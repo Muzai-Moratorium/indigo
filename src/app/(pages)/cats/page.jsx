@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./page.module.scss";
+import ProtectedRoute from "../../../components/auth/ProtectedRoute";
 
-export default function DetectorPage() {
+function DetectorPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [status, setStatus] = useState("Connecting...");
@@ -216,5 +217,14 @@ export default function DetectorPage() {
         ← Back to Home
       </Link>
     </div>
+  );
+}
+
+// ProtectedRoute로 감싸서 로그인 필수 페이지로 만듦
+export default function ProtectedDetectorPage() {
+  return (
+    <ProtectedRoute>
+      <DetectorPage />
+    </ProtectedRoute>
   );
 }

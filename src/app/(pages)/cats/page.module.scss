@@ -5,6 +5,7 @@
   justify-content: center;
   min-height: 100vh;
   background-color: #f0f0f0;
+  padding: 20px;
 }
 
 .title {
@@ -14,7 +15,8 @@
 
 .selectContainer {
   margin-bottom: 20px;
-  width: 640px;
+  width: 100%;
+  max-width: 640px;
 }
 
 .label {
@@ -35,8 +37,9 @@
 
 .videoWrapper {
   position: relative;
-  width: 640px;
-  height: 640px;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 1 / 1;
   border: 2px solid #333;
   background-color: black;
 }

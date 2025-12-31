@@ -1,3 +1,8 @@
+:root {
+  --sidebar-width: 250px;
+  --sidebar-collapsed-width: 60px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,6 +10,20 @@
 }
 
 body {
-  padding-left: 250px;
+  padding-left: var(--sidebar-width);
   min-height: 100vh;
+}
+
+/* 태블릿 */
+@media (max-width: 1024px) {
+  body {
+    padding-left: var(--sidebar-collapsed-width);
+  }
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  body {
+    padding-left: 0;
+  }
 }

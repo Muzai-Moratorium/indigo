@@ -73,7 +73,7 @@ def save_to_database(image_path, score):
             current_time = datetime.now()
             cursor.execute(sql_query, (image_path, float(score), current_time))
             connection.commit()
-            print(f"[MySQL] Saved to DB: {image_path}, Score: {score}")
+            print(f"[MySQL] DB 저장 완료: {image_path}, 신뢰도: {score:.2f}")
 
     except mysql.connector.Error as e:
         print(f"[MySQL Error] {e}")
@@ -82,19 +82,52 @@ def save_to_database(image_path, score):
             cursor.close()
             connection.close()
 
-def save_snapshot(frame, score):
+def save_snapshot(frame, score, box=None):
+    """감지된 영역만 크롭하여 저장"""
     global last_capture_time
     current_time = time.time()
 
     if current_time - last_capture_time < CAPTURE_COOLDOWN:
         return
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"cat_{timestamp}.jpg"
+    now = datetime.now()
+    timestamp_file = now.strftime("%Y년%m월%d일_%H시%M분%S초")
+    timestamp_display = now.strftime("%Y년 %m월 %d일 %H시 %M분 %S초")
+    filename = f"person_{timestamp_file}.jpg"
     filepath = os.path.join(CAPTURE_DIR, filename)
 
-    cv2.imwrite(filepath, frame)
-    print(f"Snapshot saved: {filepath}")
+    # 박스 정보가 있으면 해당 영역만 크롭
+    if box is not None:
+        x1, y1, x2, y2 = box
+        h, w = frame.shape[:2]
+        
+        # 640x640 추론 좌표를 원본 프레임 좌표로 변환
+        scale_x = w / 640
+        scale_y = h / 640
+        
+        x1 = int(x1 * scale_x)
+        y1 = int(y1 * scale_y)
+        x2 = int(x2 * scale_x)
+        y2 = int(y2 * scale_y)
+        
+        # 약간의 패딩 추가 (10%)
+        pad_x = int((x2 - x1) * 0.1)
+        pad_y = int((y2 - y1) * 0.1)
+        
+        x1 = max(0, x1 - pad_x)
+        y1 = max(0, y1 - pad_y)
+        x2 = min(w, x2 + pad_x)
+        y2 = min(h, y2 + pad_y)
+        
+        cropped = frame[y1:y2, x1:x2]
+        if cropped.size > 0:
+            cv2.imwrite(filepath, cropped)
+        else:
+            cv2.imwrite(filepath, frame)
+    else:
+        cv2.imwrite(filepath, frame)
+    
+    print(f"📸 [캡처] 사람 감지! 이미지 저장: {filename} | 신뢰도: {score:.2f} | 시간: {timestamp_display}")
     save_to_database(filepath, score)
     last_capture_time = current_time
 
@@ -128,8 +161,8 @@ def postprocess(output, conf_threshold=0.25, iou_threshold=0.5):
         if max_score > conf_threshold:
             class_id = np.argmax(classes_scores)
 
-            # 고양이만 필터링
-            if CLASSES[class_id] != "cat":
+            # 사람만 필터링
+            if CLASSES[class_id] != "person":
                 continue
 
             cx, cy, w, h = row[0], row[1], row[2], row[3]
@@ -216,10 +249,10 @@ async def websocket_endpoint(ws: WebSocket):
                     fps = frame_count / elapsed
                     print(f"FPS: {fps:.1f} | Inference: {inference_time:.1f}ms")
 
-                # 스냅샷 저장
+                # 스냅샷 저장 (신뢰도 0.5 이상, 감지 영역만 크롭)
                 for pred in predictions:
-                    if pred['label'] == 'cat' and pred['score'] >= 0.8:
-                        save_snapshot(frame, pred['score'])
+                    if pred['label'] == 'person' and pred['score'] >= 0.5:
+                        save_snapshot(frame, pred['score'], pred['box'])
                         break
 
                 # 결과 전송
