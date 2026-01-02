@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backend captures & known_faces
+backend/captures/
+backend/known_faces/
