@@ -67,7 +67,7 @@ async def send_kakao_message(message: str = "배회자가 감지되었습니다!
     
     template = {
         "object_type": "text",
-        "text": f"⚠️ [배회자 감지 알림]\n\n{message}",
+        "text": f"[배회자 감지 알림]\n\n{message}",
         "link": {
             "web_url": "http://localhost:3000",
             "mobile_web_url": "http://localhost:3000"

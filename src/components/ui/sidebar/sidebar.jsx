@@ -6,9 +6,9 @@ import { CiSearch } from "react-icons/ci";
 import { useAuth } from "../../../context/AuthContext";
 
 const MENU_ITEMS = [
-  { name: "Home", path: "/" },
-  { name: "Cats", path: "/cats" },
-  { name: "About", path: "/about" },
+  { name: "홈", path: "/" },
+  { name: "CCTV", path: "/cctv" },
+  { name: "정보", path: "/about" },
 ];
 
 function Sidebar() {
@@ -33,7 +33,7 @@ function Sidebar() {
 
       {/* 사이드바 */}
       <div className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
-        <h1 className={styles.title}>Sidebar</h1>
+        <h1 className={styles.title}>테스트용사이드바</h1>
         <form action="search">
           <input type="text" name="search" />
           <button type="submit">
@@ -60,7 +60,13 @@ function Sidebar() {
                 {user ? (
                   <>
                     <li className={styles.navItem}>
-                      <span className={styles.link}>{user.email}</span>
+                      <Link
+                        href="/mypage"
+                        className={styles.link}
+                        onClick={closeMenu}
+                      >
+                        {user.email}
+                      </Link>
                     </li>
                     <li className={styles.navItem}>
                       <button

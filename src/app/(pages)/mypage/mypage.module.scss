@@ -1,0 +1,256 @@
+/* 마이페이지 스타일 - 반응형 기본 세팅 */
+
+.container {
+  min-height: 100vh;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.card {
+  width: 100%;
+  max-width: 600px;
+  padding: 30px;
+  margin-top: 20px;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.section h2 {
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  font-weight: bold;
+}
+
+.formGroup input[type="text"] {
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.formGroup input[type="file"] {
+  padding: 10px 0;
+}
+
+/* 캡처 버튼 영역 */
+.captureButtons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.captureButtons span {
+  color: #888;
+}
+
+.cameraBtn,
+.uploadBtn {
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.cameraBtn:hover,
+.uploadBtn:hover {
+  background: #eee;
+}
+
+/* 카메라 컨테이너 */
+.cameraContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #000;
+  border-radius: 8px;
+}
+
+.cameraVideo {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+}
+
+.captureBtn {
+  padding: 12px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background: #4caf50;
+  color: white;
+}
+
+.captureBtn:hover {
+  background: #45a049;
+}
+
+/* 미리보기 */
+.preview {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.clearBtn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+}
+
+.submitBtn {
+  padding: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.message {
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* 등록된 가족 목록 */
+.whitelistNames {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.whitelistNames li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 16px;
+  border-radius: 20px;
+  background: #f0f0f0;
+}
+
+.whitelistNames li span {
+  flex: 1;
+}
+
+.deleteBtn {
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  border-radius: 50%;
+  background: #ff4444;
+  color: white;
+  line-height: 1;
+}
+
+.deleteBtn:hover {
+  background: #cc0000;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 20px;
+    margin-top: 10px;
+  }
+
+  .section {
+    padding: 15px;
+  }
+
+  .preview {
+    width: 120px;
+    height: 120px;
+  }
+
+  .captureButtons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cameraBtn,
+  .uploadBtn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 15px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .section h2 {
+    font-size: 1rem;
+  }
+}

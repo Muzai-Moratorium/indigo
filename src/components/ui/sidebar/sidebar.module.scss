@@ -13,6 +13,24 @@
   overflow: hidden;
 }
 
+.sidebar form {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.sidebar input {
+  flex: 1;
+}
+
+.sidebar button {
+  color: white;
+  flex: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
 .title {
   margin-bottom: 30px;
   font-size: 24px;
