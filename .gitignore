@@ -43,3 +43,12 @@ next-env.d.ts
 # backend captures & known_faces
 backend/captures/
 backend/known_faces/
+
+# Electron build
+/dist-electron/
+/dist-backend/
+/build-backend/
+
+# Build logs
+build-log.txt
+*.spec

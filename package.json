@@ -2,11 +2,18 @@
   "name": "cat-app",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "electron:dev": "concurrently \"next dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:start": "electron .",
+    "build:backend": "python build_backend.py",
+    "build:frontend": "set ELECTRON_BUILD=true && next build",
+    "build:electron": "electron-builder",
+    "build:all": "npm run build:frontend && npm run build:electron"
   },
   "dependencies": {
     "@use-gesture/react": "^10.3.1",
@@ -20,7 +27,32 @@
   "devDependencies": {
     "@types/node": "25.0.3",
     "@types/react": "19.2.7",
+    "concurrently": "^9.2.1",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "electron-packager": "^17.1.2",
     "eslint": "^9",
-    "eslint-config-next": "16.1.1"
+    "eslint-config-next": "16.1.1",
+    "wait-on": "^9.0.3"
+  },
+  "build": {
+    "appId": "com.catapp.guardian",
+    "productName": "Cat App",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "out/**/*",
+      "package.json"
+    ],
+    "extraResources": [],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

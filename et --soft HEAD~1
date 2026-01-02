@@ -1,0 +1,45 @@
+ README.md                                          |    130 [32m+[m
+ backend/requirements.txt                           |    Bin [31m0[m -> [32m2914[m bytes
+ build-log.txt                                      |    175 [32m+[m
+ build_backend.py                                   |     59 [32m+[m
+ dist-electron/Cat App-win32-x64/Cat App.exe        |    Bin [31m0[m -> [32m210832384[m bytes
+ dist-electron/Cat App-win32-x64/LICENSE            |     21 [32m+[m
+ .../Cat App-win32-x64/LICENSES.chromium.html       | 270541 [32m++++++++++++++++++[m
+ .../Cat App-win32-x64/chrome_100_percent.pak       |    Bin [31m0[m -> [32m114781[m bytes
+ .../Cat App-win32-x64/chrome_200_percent.pak       |    Bin [31m0[m -> [32m186658[m bytes
+ dist-electron/Cat App-win32-x64/d3dcompiler_47.dll |    Bin [31m0[m -> [32m4741480[m bytes
+ dist-electron/Cat App-win32-x64/dxcompiler.dll     |    Bin [31m0[m -> [32m26070528[m bytes
+ dist-electron/Cat App-win32-x64/dxil.dll           |    Bin [31m0[m -> [32m1503600[m bytes
+ dist-electron/Cat App-win32-x64/ffmpeg.dll         |    Bin [31m0[m -> [32m3058176[m bytes
+ dist-electron/Cat App-win32-x64/icudtl.dat         |    Bin [31m0[m -> [32m10467680[m bytes
+ dist-electron/Cat App-win32-x64/libEGL.dll         |    Bin [31m0[m -> [32m504320[m bytes
+ dist-electron/Cat App-win32-x64/libGLESv2.dll      |    Bin [31m0[m -> [32m8398848[m bytes
+ dist-electron/Cat App-win32-x64/locales/af.pak     |    Bin [31m0[m -> [32m581663[m bytes
+ dist-electron/Cat App-win32-x64/locales/am.pak     |    Bin [31m0[m -> [32m943438[m bytes
+ dist-electron/Cat App-win32-x64/locales/ar.pak     |    Bin [31m0[m -> [32m1041368[m bytes
+ dist-electron/Cat App-win32-x64/locales/bg.pak     |    Bin [31m0[m -> [32m1076101[m bytes
+ dist-electron/Cat App-win32-x64/locales/bn.pak     |    Bin [31m0[m -> [32m1388484[m bytes
+ dist-electron/Cat App-win32-x64/locales/ca.pak     |    Bin [31m0[m -> [32m655698[m bytes
+ dist-electron/Cat App-win32-x64/locales/cs.pak     |    Bin [31m0[m -> [32m679853[m bytes
+ dist-electron/Cat App-win32-x64/locales/da.pak     |    Bin [31m0[m -> [32m612505[m bytes
+ dist-electron/Cat App-win32-x64/locales/de.pak     |    Bin [31m0[m -> [32m656128[m bytes
+ dist-electron/Cat App-win32-x64/locales/el.pak     |    Bin [31m0[m -> [32m1183448[m bytes
+ dist-electron/Cat App-win32-x64/locales/en-GB.pak  |    Bin [31m0[m -> [32m530862[m bytes
+ dist-electron/Cat App-win32-x64/locales/en-US.pak  |    Bin [31m0[m -> [32m537011[m bytes
+ dist-electron/Cat App-win32-x64/locales/es-419.pak |    Bin [31m0[m -> [32m646211[m bytes
+ dist-electron/Cat App-win32-x64/locales/es.pak     |    Bin [31m0[m -> [32m643823[m bytes
+ dist-electron/Cat App-win32-x64/locales/et.pak     |    Bin [31m0[m -> [32m587467[m bytes
+ dist-electron/Cat App-win32-x64/locales/fa.pak     |    Bin [31m0[m -> [32m969338[m bytes
+ dist-electron/Cat App-win32-x64/locales/fi.pak     |    Bin [31m0[m -> [32m598290[m bytes
+ dist-electron/Cat App-win32-x64/locales/fil.pak    |    Bin [31m0[m -> [32m678665[m bytes
+ dist-electron/Cat App-win32-x64/locales/fr.pak     |    Bin [31m0[m -> [32m698781[m bytes
+ dist-electron/Cat App-win32-x64/locales/gu.pak     |    Bin [31m0[m -> [32m1370481[m bytes
+ dist-electron/Cat App-win32-x64/locales/he.pak     |    Bin [31m0[m -> [32m849479[m bytes
+ dist-electron/Cat App-win32-x64/locales/hi.pak     |    Bin [31m0[m -> [32m1449271[m bytes
+ dist-electron/Cat App-win32-x64/locales/hr.pak     |    Bin [31m0[m -> [32m654778[m bytes
+ dist-electron/Cat App-win32-x64/locales/hu.pak     |    Bin [31m0[m -> [32m701137[m bytes
+ dist-electron/Cat App-win32-x64/locales/id.pak     |    Bin [31m0[m -> [32m579373[m bytes
+ dist-electron/Cat App-win32-x64/locales/it.pak     |    Bin [31m0[m -> [32m634809[m bytes
+ dist-electron/Cat App-win32-x64/locales/ja.pak     |    Bin [31m0[m -> [32m772317[m bytes
+ dist-electron/Cat App-win32-x64/locales/kn.pak     |    Bin [31m0[m -> [32m1569200[m bytes
+ di

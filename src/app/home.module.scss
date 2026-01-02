@@ -1,0 +1,15 @@
+.home {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  h1 {
+    font-size: 100px;
+    text-shadow: 0 0 1px orange, 0 0 2px orange, 0 0 4px orange, 0 0 8px orange;
+    transition: all 0.5s ease-in-out;
+  }
+  h1:hover {
+    text-shadow: 0 0 1px rgb(2, 2, 2), 0 0 2px rgb(2, 2, 2),
+      0 0 4px rgb(2, 2, 2), 0 0 8px rgb(2, 2, 2);
+  }
+}

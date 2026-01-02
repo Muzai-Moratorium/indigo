@@ -1,3 +1,5 @@
+@import url("https://cdn.rawgit.com/moonspam/NanumSquare/master/nanumsquare.css");
+
 :root {
   --sidebar-width: 250px;
   --sidebar-collapsed-width: 60px;
@@ -7,6 +9,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: "NanumSquare", sans-serif;
 }
 
 body {

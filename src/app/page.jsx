@@ -2,10 +2,15 @@
 
 import axios from "axios";
 import { useState } from "react";
-import "./page.module.scss";
+import "../styles/globals.scss";
+import styles from "./home.module.scss";
 
 export default function Page({ params }) {
   const { param } = params;
-  const [cat, setCat] = useState(null);
-  return <div className="page">홈 페이지</div>;
+
+  return (
+    <div className={styles.home}>
+      <h1>무료 Ai 홈 프로텍터</h1>
+    </div>
+  );
 }
