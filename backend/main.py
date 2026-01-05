@@ -45,3 +45,10 @@ def get_captures():
                 "filename": file.name
             })
     return {"captures": captures}
+
+
+# PyInstaller 빌드용 엔트리포인트
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
+

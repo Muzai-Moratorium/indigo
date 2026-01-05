@@ -52,3 +52,7 @@ backend/known_faces/
 # Build logs
 build-log.txt
 *.spec
+
+# PyInstaller (backend)
+backend/dist/
+backend/build/

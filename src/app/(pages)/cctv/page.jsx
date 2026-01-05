@@ -136,7 +136,7 @@ function DetectorPage() {
     let currentStream = null;
 
     // Binary WebSocket 연결
-    ws = new WebSocket("ws://127.0.0.1:8000/security/ws");
+    ws = new WebSocket("ws://localhost:8000/security/ws");
     ws.binaryType = "arraybuffer";
 
     let frameCount = 0;

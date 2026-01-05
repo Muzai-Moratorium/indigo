@@ -10,7 +10,7 @@ export default function Page({ params }) {
 
   return (
     <div className={styles.home}>
-      <h1>무료 Ai 홈 프로텍터</h1>
+      <h1>무료 Ai 생활 보호자</h1>
     </div>
   );
 }

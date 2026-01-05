@@ -120,6 +120,8 @@ npm run dev
 
 ## 8. Electron 데스크톱 앱 (2026-01-02 추가)
 
+> ⚠️ **빌드 보류** (2026-01-05): 백엔드 PyInstaller 패키징 문제로 개발 중단
+
 ### 8.1 개요
 
 Next.js 웹 앱을 Windows 데스크톱 앱(.exe)으로 패키징하는 기능 추가.
@@ -138,26 +140,18 @@ Next.js 웹 앱을 Windows 데스크톱 앱(.exe)으로 패키징하는 기능 �
 | `electron/preload.js` | 보안 preload 스크립트                     |
 | `build_backend.py`    | PyInstaller 백엔드 빌드 스크립트 (미사용) |
 
-### 8.3 사용 방법
+### 8.3 현재 상태 및 문제점
 
-```bash
-# 웹 개발 모드
-npm run dev
+- ✅ 프론트엔드 패키징 성공
+- ✅ 메인 화면, CSS 정상 작동
+- ❌ **백엔드 통합 실패** - PyInstaller로 FastAPI 빌드 후 실행 시 에러 발생
+  - MySQL 커넥터, 모듈 경로 등 의존성 문제
+  - `localhost` vs `127.0.0.1` 호스트명 충돌
 
-# Electron 개발 모드
-npm run electron:dev
+### 8.4 향후 계획
 
-# 프로덕션 빌드 (EXE 생성)
-$env:ELECTRON_BUILD='true'; npm run build
-npx electron-packager . "Cat App" --platform=win32 --arch=x64 --out=dist-electron --overwrite
-```
-
-### 8.4 현재 상태
-
-- ✅ 메인 화면 표시
-- ✅ CSS 스타일 적용
-- ⚠️ 페이지 네비게이션 (부분 작동 - 추가 수정 필요)
-- ⚠️ 백엔드 통합 (별도 서버 실행 필요)
+- 웹 버전 개발 집중
+- Electron 앱은 백엔드 문제 해결 후 재시도
 
 ---
 

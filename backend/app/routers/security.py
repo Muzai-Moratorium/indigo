@@ -8,6 +8,7 @@ import numpy as np
 import cv2
 import time
 import os
+import sys
 from datetime import datetime
 import mysql.connector
 from app.utils.face_recognition_module import FaceRecognitionWhitelist
@@ -15,9 +16,22 @@ from app.utils.face_recognition_module import FaceRecognitionWhitelist
 router = APIRouter(prefix="/security", tags=["security"])
 
 # ============================================
+# PyInstaller 호환 경로 설정
+# ============================================
+def get_base_dir():
+    """PyInstaller 빌드 또는 일반 실행 모두 지원하는 베이스 경로 반환"""
+    if getattr(sys, 'frozen', False):
+        # PyInstaller로 빌드된 경우 - exe 파일이 있는 디렉토리
+        return os.path.dirname(sys.executable)
+    else:
+        # 일반 Python 실행 - 기존 방식
+        return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+BACKEND_DIR = get_base_dir()
+
+# ============================================
 # 스냅샷 저장 설정 (절대 경로 사용)
 # ============================================
-BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CAPTURE_DIR = os.path.join(BACKEND_DIR, "captures")
 os.makedirs(CAPTURE_DIR, exist_ok=True)
 print(f"[Security] 캡처 저장 경로: {CAPTURE_DIR}")
@@ -136,8 +150,8 @@ sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_AL
 
 providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-MODEL_PATH = os.path.join(BASE_DIR, "artifacts", "yolov8n.onnx")
+# BACKEND_DIR 사용 (상단에서 정의한 get_base_dir() 함수 결과)
+MODEL_PATH = os.path.join(BACKEND_DIR, "artifacts", "yolov8n.onnx")
 
 if not os.path.exists(MODEL_PATH):
     print(f"Warning: Model file not found at {MODEL_PATH}")
