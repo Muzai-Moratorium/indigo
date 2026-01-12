@@ -1,3 +1,14 @@
+"""
+Kakao Router - 카카오톡 알림 시스템
+==================================
+카카오 OAuth 연동 및 메시지 전송
+
+주요 기능:
+- 카카오 OAuth 로그인 (GET /kakao/login, /kakao/callback)
+- 카카오톡 메시지 전송 (POST /kakao/send-message)
+- 연동 상태 확인 (GET /kakao/status)
+- 배회자 감지 알림 전송 (notify_loitering)
+"""
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse
 import httpx

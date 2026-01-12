@@ -4,6 +4,7 @@ import styles from "./sidebar.module.scss";
 import Link from "next/link";
 import { CiSearch } from "react-icons/ci";
 import { useAuth } from "../../../context/AuthContext";
+import DayNightToggle from "../darkmodeBtn/DayNightToggle";
 
 const MENU_ITEMS = [
   { name: "홈", path: "/" },
@@ -33,7 +34,7 @@ function Sidebar() {
 
       {/* 사이드바 */}
       <div className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
-        <h1 className={styles.title}>테스트용사이드바</h1>
+        <h1 className={styles.title}>반응형테스트</h1>
         <form action="search">
           <input type="text" name="search" />
           <button type="submit">
@@ -75,13 +76,6 @@ function Sidebar() {
                           closeMenu();
                         }}
                         className={styles.link}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          width: "100%",
-                          textAlign: "left",
-                        }}
                       >
                         로그아웃
                       </button>
@@ -113,6 +107,11 @@ function Sidebar() {
             )}
           </ul>
         </nav>
+
+        {/* 다크모드 토글 - 하단 */}
+        <div className={styles.toggleWrapper}>
+          <DayNightToggle />
+        </div>
       </div>
     </>
   );

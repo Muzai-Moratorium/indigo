@@ -1,16 +1,35 @@
 .sidebar {
   width: var(--sidebar-width, 250px);
   height: 100vh;
-  background-color: #333;
-  color: white;
+  background-color: #ff8c00;
+  color: rgb(255, 255, 255);
   padding: 20px;
   position: fixed;
   left: 0;
   top: 0;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.3s ease;
   overflow: hidden;
+  transform: translateX(-100%);
+  z-index: 100;
+
+  :global(.dark-mode) & {
+    background-color: #2c3e50;
+  }
+
+  &.open {
+    transform: translateX(0);
+  }
+}
+
+/* 하단 토글 wrapper */
+.toggleWrapper {
+  margin-top: auto;
+  padding: 20px 0;
+  display: flex;
+  justify-content: center;
 }
 
 .sidebar form {
@@ -45,10 +64,12 @@
 
 .navItem {
   margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
 }
 
 .link {
-  color: #ccc;
+  color: white;
   text-decoration: none;
   font-size: 18px;
   transition: color 0.2s;
@@ -63,68 +84,60 @@
   }
 }
 
-/* 햄버거 버튼 */
+/* 햄버거 버튼 - 기본으로 표시 */
 .menuButton {
-  display: none;
+  display: block;
   position: fixed;
   top: 10px;
   left: 10px;
   z-index: 1000;
-  background: #333;
+  background: #ff8c00;
   color: white;
   border: none;
   padding: 10px 15px;
   font-size: 24px;
   cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  :global(.dark-mode) & {
+    background: #2c3e50;
+  }
 }
 
 /* 오버레이 */
 .overlay {
-  display: none;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0);
   z-index: 99;
+  pointer-events: none;
+  transition: background-color 0.3s ease;
+
+  &.open {
+    background: rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+  }
 }
 
-/* 태블릿 */
-@media (max-width: 1024px) {
-  .sidebar {
-    width: var(--sidebar-collapsed-width, 60px);
-    padding: 20px 10px;
-  }
-
+/* 반응형: 작은 화면에서 폰트 크기 조정 */
+@media (max-width: 768px) {
   .title {
-    font-size: 16px;
+    font-size: 20px;
   }
 
   .link {
-    font-size: 14px;
-    padding: 10px 5px;
-    text-align: center;
-  }
-}
-
-/* 모바일 */
-@media (max-width: 768px) {
-  .menuButton {
-    display: block;
-  }
-
-  .sidebar {
-    width: var(--sidebar-width, 250px);
-    transform: translateX(-100%);
-    z-index: 100;
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .overlay.open {
-    display: block;
+    font-size: 16px;
   }
 }

@@ -56,3 +56,9 @@ build-log.txt
 # PyInstaller (backend)
 backend/dist/
 backend/build/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+backend/.venv/

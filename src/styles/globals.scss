@@ -13,20 +13,13 @@
 }
 
 body {
-  padding-left: var(--sidebar-width);
+  padding-left: 0;
   min-height: 100vh;
-}
+  background-color: #f8f9fa;
+  transition: background-color 0.3s ease;
 
-/* 태블릿 */
-@media (max-width: 1024px) {
-  body {
-    padding-left: var(--sidebar-collapsed-width);
-  }
-}
-
-/* 모바일 */
-@media (max-width: 768px) {
-  body {
-    padding-left: 0;
+  &.dark-mode {
+    color: white;
+    background-color: #1a252f;
   }
 }

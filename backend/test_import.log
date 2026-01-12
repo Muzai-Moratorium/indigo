@@ -1,0 +1,156 @@
+﻿python : C:\Users\User\
+AppData\Local\Programs\
+Python\Python312\Lib\si
+te-packages\onnxruntime
+\capi\onnxruntime_infer
+ence_collection.py:123:
+ UserWarning: Specified
+ provider 'DmlExecution
+Provider' is not in ava
+ilable provider names.A
+vailable providers: 'Az
+ureExecutionProvider, C
+PUExecutionProvider'
+위치 줄:1 문자:1
++ python -c "from app.r
+outers import security;
+ print('Import OK')" 2>
+&1 ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (C:\Users\User   
+ \A...cutionProvide    
+r':String) [], Rem    o
+teException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  warnings.warn(
+C:\Users\User\AppData\L
+ocal\Programs\Python\Py
+thon312\Lib\site-packag
+es\onnxruntime\capi\onn
+xruntime_inference_coll
+ection.py:123: UserWarn
+ing: Specified provider
+ 'CUDAExecutionProvider
+' is not in available p
+rovider names.Available
+ providers: 'AzureExecu
+tionProvider, CPUExecut
+ionProvider'
+  warnings.warn(
+Traceback (most recent 
+call last):
+  File "C:\Users\User\D
+esktop\cat_finder\indig
+o_p\backend\app\service
+s\mediapipe_service.py"
+, line 28, in _init_med
+iapipe
+    from mediapipe.task
+s import python as mp_p
+ython
+ModuleNotFoundError: No
+ module named 'mediapip
+e'
+Form data requires "pyt
+hon-multipart" to be in
+stalled. 
+You can install "python
+-multipart" with: 
+
+pip install python-mult
+ipart
+
+Traceback (most recent 
+call last):
+  File "<string>", line
+ 1, in <module>
+  File "C:\Users\User\D
+esktop\cat_finder\indig
+o_p\backend\app\routers
+\security.py", line 218
+, in <module>
+    @router.post("/whit
+elist/upload")
+     ^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+  File "C:\Users\User\A
+ppData\Local\Programs\P
+ython\Python312\Lib\sit
+e-packages\fastapi\rout
+ing.py", line 1138, in 
+decorator
+    self.add_api_route(
+  File "C:\Users\User\A
+ppData\Local\Programs\P
+ython\Python312\Lib\sit
+e-packages\fastapi\rout
+ing.py", line 1077, in 
+add_api_route
+    route = route_class
+(
+            ^^^^^^^^^^^
+^
+  File "C:\Users\User\A
+ppData\Local\Programs\P
+ython\Python312\Lib\sit
+e-packages\fastapi\rout
+ing.py", line 696, in _
+_init__
+    self.dependant = ge
+t_dependant(
+                     ^^
+^^^^^^^^^^^^
+  File "C:\Users\User\A
+ppData\Local\Programs\P
+ython\Python312\Lib\sit
+e-packages\fastapi\depe
+ndencies\utils.py", lin
+e 283, in get_dependant
+    param_details = ana
+lyze_param(
+                    ^^^
+^^^^^^^^^^^
+  File "C:\Users\User\A
+ppData\Local\Programs\P
+ython\Python312\Lib\sit
+e-packages\fastapi\depe
+ndencies\utils.py", lin
+e 527, in analyze_param
+    ensure_multipart_is
+_installed()
+  File "C:\Users\User\A
+ppData\Local\Programs\P
+ython\Python312\Lib\sit
+e-packages\fastapi\depe
+ndencies\utils.py", lin
+e 116, in ensure_multip
+art_is_installed
+    raise RuntimeError(
+multipart_not_installed
+_error) from None
+RuntimeError: Form data
+ requires "python-multi
+part" to be installed. 
+You can install "python
+-multipart" with: 
+
+pip install python-mult
+ipart
+
+[PathUtils] 베이스 경로: C:\Users\User\Desktop\cat_finder\indigo_p\backend
+[PathUtils] 캡처 저장 경로: C:\Users\User\Desktop\cat_finder\indigo_p\backend\captures
+[PathUtils] 화이트리스트 폴더: C:\Users\User\Desktop\cat_finder\indigo_p\backend\known_faces
+[AIModel] YOLO11n 모델 로드 완료 - Providers: ['CPUExecutionProvider']
+[MediaPipe] 초기화 실패: No module named 'mediapipe'
+[MediaPipe] YOLO 단독 모드로 실행 (관절 추출 비활성화)
+[FaceRecognition] 얼굴 탐지기 초기화 완료 (Haar Cascade)
+[FaceRecognition] 0명의 화이트리스트 사용자 로드 완료
+[Security] 화이트리스트 폴더: C:\Users\User\Desktop\cat_finder\indigo_p\backend\known_faces

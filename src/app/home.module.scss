@@ -1,15 +1,78 @@
+@font-face {
+  font-family: "OngleipParkDahyeon";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2")
+    format("woff2");
+  font-weight: normal;
+  font-display: swap;
+}
+
 .home {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-end;
   align-items: center;
-  height: 100vh;
-  h1 {
-    font-size: 100px;
-    text-shadow: 0 0 1px orange, 0 0 2px orange, 0 0 4px orange, 0 0 8px orange;
-    transition: all 0.5s ease-in-out;
+  min-height: 200vh; // 스크롤 공간 확보
+  padding: 20px;
+  padding-bottom: 100px;
+  font-family: "OngleipParkDahyeon";
+  * {
+    font-family: inherit;
   }
-  h1:hover {
-    text-shadow: 0 0 1px rgb(2, 2, 2), 0 0 2px rgb(2, 2, 2),
-      0 0 4px rgb(2, 2, 2), 0 0 8px rgb(2, 2, 2);
+
+  ScrollReveal {
+    margin: 20px 0;
   }
+
+  img {
+    max-width: 400px;
+    width: 100%;
+    height: auto;
+    border-radius: 20px;
+    margin-top: 30px;
+    transition: opacity 0.5s ease, transform 0.3s ease;
+    z-index: 99;
+  }
+}
+
+// 별 반짝임 애니메이션
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+// 별 컨테이너 (다크 모드에서만 표시)
+.stars {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0; // 기본: 숨김
+
+  // 다크 모드일 때만 표시
+  :global(.dark-mode) & {
+    opacity: 1;
+  }
+}
+
+.star {
+  position: absolute;
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8);
+  animation: twinkle 1.5s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
 }

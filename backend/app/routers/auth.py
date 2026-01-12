@@ -1,3 +1,13 @@
+"""
+Auth Router - 사용자 인증 시스템
+================================
+JWT 기반 사용자 인증 및 세션 관리
+
+주요 기능:
+- 회원가입 (POST /auth/signup)
+- 로그인/로그아웃 (POST /auth/login, /auth/logout)
+- 인증 상태 확인 (GET /auth/check, /auth/me)
+"""
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -9,10 +19,17 @@ from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# ============================================
 # JWT 설정
+# ============================================
 SECRET_KEY = "your-super-secret-key-change-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24시간
+
+
+# ============================================
+# 유틸리티 함수
+# ============================================
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -51,6 +68,10 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     
     return user
 
+
+# ============================================
+# API 엔드포인트
+# ============================================
 @router.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     """회원가입"""
