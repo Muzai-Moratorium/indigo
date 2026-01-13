@@ -84,3 +84,43 @@
   color: #0070f3;
   font-weight: bold;
 }
+
+.selectContainer button {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: none;
+  color: white;
+  font-weight: bold;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  background-color: #666;
+
+  &.isEnabled {
+    background-color: #4caf50;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+// MediaPipe 설정 영역
+.mediapipeSection {
+  gap: 16px;
+}
+
+.mediapipeControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.noModelWarning {
+  color: #ff6b6b;
+  font-size: 12px;
+}
+
+.intervalSelect {
+  width: 80px;
+}

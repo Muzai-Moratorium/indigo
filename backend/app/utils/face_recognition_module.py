@@ -18,7 +18,7 @@ class FaceRecognitionWhitelist:
     
     # 얼굴 인식 설정
     FACE_DETECTION_CONFIDENCE = 0.5  # 얼굴 탐지 최소 신뢰도
-    FACE_MATCH_THRESHOLD = 0.6       # 얼굴 매칭 임계값 (낮을수록 엄격)
+    FACE_MATCH_THRESHOLD = 0.48      # 얼굴 매칭 임계값 (낮을수록 엄격, 오탐 감소)
     
     def __init__(self, known_faces_dir: str, models_dir: Union[str, Path, None] = None):
         """
@@ -125,8 +125,8 @@ class FaceRecognitionWhitelist:
         얼굴 이미지에서 특징 벡터(인코딩) 추출
         - OpenCV 히스토그램 + 리사이즈 기반 간단한 인코딩
         """
-        # 얼굴 이미지를 고정 크기로 리사이즈
-        face_resized = cv2.resize(face_img, (64, 64))
+        # 얼굴 이미지를 고정 크기로 리사이즈 (128x128로 디테일 강화)
+        face_resized = cv2.resize(face_img, (128, 128))
         
         # 그레이스케일 변환
         if len(face_resized.shape) == 3:
@@ -142,8 +142,8 @@ class FaceRecognitionWhitelist:
         # 추가: 평탄화된 픽셀 값도 포함
         flattened = gray.flatten().astype(np.float32) / 255.0
         
-        # 히스토그램 + 리사이즈된 특징 결합
-        encoding = np.concatenate([hist, flattened[:256]])
+        # 히스토그램 + 리사이즈된 특징 결합 (128x128 대응)
+        encoding = np.concatenate([hist, flattened[:512]])
         
         return encoding
     

@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import styles from "./cctv.module.scss";
 import ProtectedRoute from "../../../components/auth/ProtectedRoute";
 
@@ -15,6 +14,16 @@ function DetectorPage() {
   const [stream, setStream] = useState(null);
   const [fps, setFps] = useState(0);
   const [isMonitoring, setIsMonitoring] = useState(false);
+
+  // 모델 선택 상태
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [isModelSwitching, setIsModelSwitching] = useState(false);
+
+  // MediaPipe 설정 상태
+  const [mediapipeEnabled, setMediapipeEnabled] = useState(true);
+  const [mediapipeInterval, setMediapipeInterval] = useState(5);
+  const [mediapipeAvailable, setMediapipeAvailable] = useState(false);
 
   // 페이지 이탈 확인 (브라우저 새로고침/닫기)
   useEffect(() => {
@@ -87,22 +96,6 @@ function DetectorPage() {
     };
   }, [isMonitoring]);
 
-  // 홈으로 돌아가기 버튼용
-  const handleNavigateAway = (e, href) => {
-    if (isMonitoring) {
-      e.preventDefault();
-      const confirmed = window.confirm(
-        "모니터링 중입니다!\n\n페이지를 떠나면 감시가 중단됩니다.\n정말 나가시겠습니까?"
-      );
-      if (confirmed) {
-        setIsMonitoring(false);
-        router.push(href);
-      }
-    } else {
-      router.push(href);
-    }
-  };
-
   useEffect(() => {
     async function getDevices() {
       try {
@@ -127,6 +120,62 @@ function DetectorPage() {
     getDevices();
   }, []);
 
+  // MediaPipe 설정 조회
+  useEffect(() => {
+    async function fetchMediapipeSettings() {
+      try {
+        const response = await fetch(
+          "http://localhost:8000/security/mediapipe/settings"
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setMediapipeEnabled(data.enabled);
+          setMediapipeInterval(data.frameInterval);
+          setMediapipeAvailable(data.available);
+        }
+      } catch (error) {
+        console.error("MediaPipe 설정 조회 실패:", error);
+      }
+    }
+    fetchMediapipeSettings();
+  }, []);
+
+  // MediaPipe 토글 핸들러
+  const handleMediapipeToggle = async () => {
+    const newValue = !mediapipeEnabled;
+    try {
+      const response = await fetch(
+        `http://localhost:8000/security/mediapipe/toggle?enabled=${newValue}`,
+        { method: "POST" }
+      );
+      if (response.ok) {
+        setMediapipeEnabled(newValue);
+        console.log("MediaPipe:", newValue ? "ON" : "OFF");
+      }
+    } catch (error) {
+      console.error("MediaPipe 토글 실패:", error);
+    }
+  };
+
+  // MediaPipe 주기 변경 핸들러
+  const handleMediapipeIntervalChange = async (interval) => {
+    const value = parseInt(interval);
+    if (isNaN(value) || value < 1 || value > 30) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/security/mediapipe/interval?interval=${value}`,
+        { method: "POST" }
+      );
+      if (response.ok) {
+        setMediapipeInterval(value);
+        console.log("MediaPipe 주기:", value);
+      }
+    } catch (error) {
+      console.error("MediaPipe 주기 변경 실패:", error);
+    }
+  };
+
   useEffect(() => {
     if (!selectedDeviceId) return;
 
@@ -136,7 +185,7 @@ function DetectorPage() {
     let currentStream = null;
 
     // Binary WebSocket 연결
-    ws = new WebSocket("ws://127.0.0.1:8000/security/ws");
+    ws = new WebSocket("ws://localhost:8000/security/ws");
     ws.binaryType = "arraybuffer";
 
     let frameCount = 0;
@@ -177,24 +226,198 @@ function DetectorPage() {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // MediaPipe Pose 33 키포인트 스켈레톤 연결 (0-indexed)
+      // 0: 코, 1-4: 눈/눈썹, 5-8: 귀, 9-10: 입, 11-12: 어깨
+      // 13-14: 팔꿈치, 15-16: 손목, 17-22: 손가락, 23-24: 엉덩이
+      // 25-26: 무릎, 27-28: 발목, 29-32: 발
+      const SKELETON = [
+        // 몸통
+        [11, 12], // 어깨
+        [11, 23],
+        [12, 24], // 어깨-엉덩이
+        [23, 24], // 엉덩이
+        // 왼팔
+        [11, 13],
+        [13, 15], // 어깨-팔꿈치-손목
+        // 오른팔
+        [12, 14],
+        [14, 16],
+        // 왼다리
+        [23, 25],
+        [25, 27], // 엉덩이-무릎-발목
+        // 오른다리
+        [24, 26],
+        [26, 28],
+        // 얼굴
+        [0, 1],
+        [0, 4], // 코-눈
+        [1, 2],
+        [4, 5], // 눈
+        [2, 3],
+        [5, 6], // 눈-귀
+      ];
+
       if (data.predictions) {
+        // 320x320 모델 출력 → 640x640 캔버스 스케일
+        const SCALE = 2;
+
         data.predictions.forEach((prediction) => {
-          const [x1, y1, x2, y2] = prediction.box;
+          const [bx1, by1, bx2, by2] = prediction.box;
+          // 스케일 적용
+          const x1 = bx1 * SCALE;
+          const y1 = by1 * SCALE;
+          const x2 = bx2 * SCALE;
+          const y2 = by2 * SCALE;
           const label = prediction.label;
           const score = prediction.score;
 
-          ctx.strokeStyle = "#00FF00";
-          ctx.lineWidth = 3;
+          // 클래스별 색상/스타일 결정
+          const isDanger = label === "fire" || label === "smoke";
+          const isLoitering = prediction.is_loitering === true;
+          const trackId = prediction.track_id;
+
+          // 색상: 화재/연기=빨강, 거수자=주황, 일반인=녹색
+          let color = "#00FF00"; // 기본: 녹색 (일반인)
+          if (isDanger) {
+            color = "#FF0000"; // 빨강 (화재/연기)
+          } else if (isLoitering) {
+            color = "#FFA500"; // 주황 (거수자)
+          }
+          const lineWidth = isDanger || isLoitering ? 4 : 2;
+
+          // 박스 그리기
+          ctx.strokeStyle = color;
+          ctx.lineWidth = lineWidth;
+
+          // 거수자/화재는 깜빡이는 점선 박스
+          if (isLoitering || isDanger) {
+            ctx.setLineDash([10, 5]);
+          }
           ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+          ctx.setLineDash([]); // 점선 초기화
 
-          ctx.fillStyle = "#00FF00";
-          const text = `${label} ${score}`;
+          // 라벨을 박스 안쪽 상단에 표시
+          ctx.font = "bold 14px Arial";
+          // 거수자/일반인 구분 + track_id 표시
+          let displayLabel = label;
+          if (label === "person" && trackId !== undefined) {
+            displayLabel = isLoitering
+              ? `거수자 #${trackId}`
+              : `사람 #${trackId}`;
+          }
+          const text = `${displayLabel} ${(score * 100).toFixed(0)}%`;
           const textWidth = ctx.measureText(text).width;
-          ctx.fillRect(x1, y1 - 20, textWidth + 10, 20);
 
-          ctx.fillStyle = "black";
-          ctx.font = "16px Arial";
-          ctx.fillText(text, x1 + 5, y1 - 5);
+          // 라벨 배경
+          ctx.fillStyle = color;
+          ctx.fillRect(x1, y1, textWidth + 8, 20);
+
+          // 라벨 텍스트
+          ctx.fillStyle = isDanger || isLoitering ? "white" : "black";
+          ctx.fillText(text, x1 + 4, y1 + 15);
+
+          // 거수자 경고 표시 (화재처럼 박스 상단에 경고 라벨)
+          if (isLoitering) {
+            const warningText = "⚠️ 거수자 주의!";
+            ctx.font = "bold 16px Arial";
+            const warningWidth = ctx.measureText(warningText).width;
+            ctx.fillStyle = "#FFA500";
+            ctx.fillRect(x1, y1 - 28, warningWidth + 12, 26);
+            ctx.fillStyle = "white";
+            ctx.fillText(warningText, x1 + 6, y1 - 10);
+          }
+
+          // 키포인트 그리기 (MediaPipe Pose 33개)
+          if (prediction.keypoints && prediction.keypoints.length >= 25) {
+            const kpts = prediction.keypoints;
+
+            // 스켈레톤 연결선 그리기
+            ctx.strokeStyle = "#00FFFF";
+            ctx.lineWidth = 2;
+            SKELETON.forEach(([i, j]) => {
+              if (i < kpts.length && j < kpts.length) {
+                const [x1k, y1k, c1] = kpts[i];
+                const [x2k, y2k, c2] = kpts[j];
+                if (c1 > 0.3 && c2 > 0.3) {
+                  ctx.beginPath();
+                  ctx.moveTo(x1k * SCALE, y1k * SCALE);
+                  ctx.lineTo(x2k * SCALE, y2k * SCALE);
+                  ctx.stroke();
+                }
+              }
+            });
+
+            // 키포인트 점 그리기 (주요 관절만)
+            const mainJoints = [
+              0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28,
+            ];
+            mainJoints.forEach((idx) => {
+              if (idx < kpts.length) {
+                const [kx, ky, kconf] = kpts[idx];
+                if (kconf > 0.3) {
+                  // 부위별 색상
+                  let pointColor = "#FF00FF"; // 기본: 분홍
+                  if (idx <= 10) pointColor = "#FFFF00"; // 얼굴/어깨: 노랑
+                  else if (idx <= 22) pointColor = "#00FF00"; // 팔/손: 초록
+                  else pointColor = "#FF6600"; // 다리/발: 주황
+
+                  ctx.fillStyle = pointColor;
+                  ctx.beginPath();
+                  ctx.arc(kx * SCALE, ky * SCALE, 4, 0, Math.PI * 2);
+                  ctx.fill();
+                }
+              }
+            });
+          }
+        });
+      }
+
+      // 알림(alerts) 표시 - 이상행동, 배회자, 화재 등
+      if (data.alerts && data.alerts.length > 0) {
+        data.alerts.forEach((alert) => {
+          // 320x320 좌표를 640x640으로 스케일
+          const ALERT_SCALE = 2;
+          const [ax1, ay1, ax2, ay2] = alert.box;
+          const x1 = ax1 * ALERT_SCALE;
+          const y1 = ay1 * ALERT_SCALE;
+          const x2 = ax2 * ALERT_SCALE;
+          const y2 = ay2 * ALERT_SCALE;
+
+          // 알림 유형별 스타일
+          let alertColor = "#FF0000";
+          let alertText = "";
+
+          if (alert.type === "abnormal") {
+            alertColor = "#FF00FF"; // 마젠타
+            const behaviors = alert.behaviors || [];
+            const behaviorLabels = {
+              FALL: "넘어짐!",
+              HANDS_UP: "손들기!",
+              FAST_MOTION: "빠른동작!",
+            };
+            alertText = behaviors.map((b) => behaviorLabels[b] || b).join(" ");
+          } else if (alert.type === "loitering") {
+            alertColor = "#FFA500"; // 주황
+            alertText = "배회자 감지!";
+          } else if (alert.type === "fire" || alert.type === "smoke") {
+            alertColor = "#FF0000";
+            alertText = alert.type === "fire" ? "화재!" : "연기!";
+          }
+
+          // 경고 박스 (깜빡이는 효과)
+          ctx.strokeStyle = alertColor;
+          ctx.lineWidth = 4;
+          ctx.setLineDash([10, 5]);
+          ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+          ctx.setLineDash([]);
+
+          // 경고 라벨 (상단)
+          ctx.font = "bold 16px Arial";
+          const textWidth = ctx.measureText(alertText).width;
+          ctx.fillStyle = alertColor;
+          ctx.fillRect(x1, y1 - 28, textWidth + 12, 26);
+          ctx.fillStyle = "white";
+          ctx.fillText(alertText, x1 + 6, y1 - 10);
         });
       }
     };
@@ -224,30 +447,37 @@ function DetectorPage() {
 
         const hiddenCanvas = document.createElement("canvas");
         const hiddenCtx = hiddenCanvas.getContext("2d");
-        hiddenCanvas.width = 640;
-        hiddenCanvas.height = 640;
+        hiddenCanvas.width = 320; // 640 → 320 (속도 향상)
+        hiddenCanvas.height = 320;
+
+        let isSending = false; // 프레임 전송 중 플래그
 
         function sendFrame() {
           if (!videoRef.current || !hiddenCtx) return;
+          if (isSending) return; // 이전 프레임 전송 중이면 스킵
 
           if (ws && ws.readyState === WebSocket.OPEN) {
-            hiddenCtx.drawImage(videoRef.current, 0, 0, 640, 640);
+            isSending = true;
+            hiddenCtx.drawImage(videoRef.current, 0, 0, 320, 320);
 
             hiddenCanvas.toBlob(
               (blob) => {
                 if (blob && ws && ws.readyState === WebSocket.OPEN) {
                   blob.arrayBuffer().then((buffer) => {
                     ws.send(buffer);
+                    isSending = false; // 전송 완료
                   });
+                } else {
+                  isSending = false;
                 }
               },
               "image/jpeg",
-              0.6
+              0.7 // 품질 약간 높임
             );
           }
         }
 
-        intervalId = setInterval(sendFrame, 150);
+        intervalId = setInterval(sendFrame, 33); // 약 30 FPS
       })
       .catch((error) => {
         console.error("카메라 접근 실패:", error);
@@ -285,7 +515,7 @@ function DetectorPage() {
       <h1 className={styles.title}>CCTV</h1>
 
       <div className={styles.selectContainer}>
-        <label className={styles.label}>카메라 선택:</label>
+        <label className={styles.label}>카메라 선택</label>
         <select
           value={selectedDeviceId}
           onChange={(e) => setSelectedDeviceId(e.target.value)}
@@ -298,6 +528,39 @@ function DetectorPage() {
           ))}
         </select>
       </div>
+      {/* MediaPipe 설정 (관절 추출) */}
+      <div className={`${styles.selectContainer} ${styles.mediapipeSection}`}>
+        <div className={styles.mediapipeControls}>
+          <label className={styles.label}>MediaPipe</label>
+          <button
+            onClick={handleMediapipeToggle}
+            disabled={!mediapipeAvailable}
+            className={mediapipeEnabled ? styles.isEnabled : ""}
+          >
+            {mediapipeEnabled ? "ON" : "OFF"}
+          </button>
+          {!mediapipeAvailable && (
+            <span className={styles.noModelWarning}>(모델 없음)</span>
+          )}
+        </div>
+
+        {mediapipeEnabled && mediapipeAvailable && (
+          <div className={styles.mediapipeControls}>
+            <select
+              value={mediapipeInterval}
+              onChange={(e) => handleMediapipeIntervalChange(e.target.value)}
+              className={`${styles.select} ${styles.intervalSelect}`}
+            >
+              <option value="1">1FPS</option>
+              <option value="3">3FPS</option>
+              <option value="5">5FPS</option>
+              <option value="10">10FPS</option>
+              <option value="15">15FPS</option>
+              <option value="30">30FPS</option>
+            </select>
+          </div>
+        )}
+      </div>
 
       <div className={styles.videoWrapper}>
         <div
@@ -307,7 +570,7 @@ function DetectorPage() {
               : styles.statusDisconnected
           }`}
         >
-          Status: {status} | FPS: {fps}
+          상태: {status} | : {fps}
         </div>
 
         <video
@@ -326,14 +589,6 @@ function DetectorPage() {
           className={styles.canvasElement}
         />
       </div>
-
-      <button
-        onClick={(e) => handleNavigateAway(e, "/")}
-        className={styles.backLink}
-        style={{ background: "none", border: "none", cursor: "pointer" }}
-      >
-        ← 홈으로 돌아가기
-      </button>
     </div>
   );
 }
