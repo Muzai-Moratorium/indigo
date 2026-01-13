@@ -77,6 +77,8 @@
   padding: 10px;
   border-radius: 4px;
   white-space: nowrap;
+  transition: 0.3s;
+  border-radius: 15px;
 
   &:hover {
     color: white;
@@ -84,20 +86,22 @@
   }
 }
 
-/* 햄버거 버튼 - 기본으로 표시 */
 .menuButton {
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  line-height: 0;
   position: fixed;
   top: 10px;
   left: 10px;
-  z-index: 1000;
+  z-index: 50;
   background: #ff8c00;
   color: white;
   border: none;
-  padding: 10px 15px;
+  padding: 15px;
   font-size: 24px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 15px;
   transition: background-color 0.3s ease, transform 0.2s ease;
 
   &:hover {

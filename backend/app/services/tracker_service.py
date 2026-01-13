@@ -391,7 +391,7 @@ def check_loitering(track_id, box, frame, score, face_whitelist):
             save_snapshot(frame, score, box, track_id=track_id, 
                          stay_duration=elapsed, is_loitering=True)
             tracker["notified"] = True
-            return {"type": "loitering", "keypoints": keypoints}
+            return {"type": "loitering", "keypoints": keypoints, "elapsed": elapsed}
         
         # 이미 배회자로 판정된 경우 → 관절 정보만 반환
         if tracker["notified"] and keypoints:

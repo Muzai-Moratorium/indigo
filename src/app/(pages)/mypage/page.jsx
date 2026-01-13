@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import styles from "./mypage.module.scss";
+import { TiRefreshOutline } from "react-icons/ti";
 
 export default function MyPage() {
   const { user, loading: authLoading } = useAuth();
@@ -18,6 +19,12 @@ export default function MyPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [whitelist, setWhitelist] = useState([]);
+
+  // 카카오 연동 상태
+  const [kakaoStatus, setKakaoStatus] = useState({
+    connected: false,
+    message: "확인 중...",
+  });
 
   // 카메라 관련 상태
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -34,12 +41,29 @@ export default function MyPage() {
     }
   }, []);
 
+  // 카카오 연동 상태 확인
+  const fetchKakaoStatus = useCallback(async () => {
+    try {
+      const res = await fetch("http://localhost:8000/kakao/status");
+      const data = await res.json();
+      setKakaoStatus(data);
+    } catch (err) {
+      setKakaoStatus({ connected: false, message: "서버 연결 실패" });
+    }
+  }, []);
+
+  // 카카오 로그인 페이지로 이동
+  const handleKakaoLogin = () => {
+    window.location.href = "http://localhost:8000/kakao/login";
+  };
+
   // 컴포넌트 마운트 시 조회
   useEffect(() => {
     if (user) {
       fetchWhitelist();
+      fetchKakaoStatus();
     }
-  }, [user, fetchWhitelist]);
+  }, [user, fetchWhitelist, fetchKakaoStatus]);
 
   // 로그인 체크 - 로딩이 끝난 후에만 체크
   useEffect(() => {
@@ -190,6 +214,59 @@ export default function MyPage() {
         <section className={styles.section}>
           <h2>내 정보</h2>
           <p>이메일: {user?.email || "로딩 중..."}</p>
+        </section>
+
+        {/* 카카오 연동 */}
+        <section className={styles.section}>
+          <h2>카카오톡 알림 연동</h2>
+          <p className={styles.description}>
+            배회자 감지 시 카카오톡으로 알림을 받을 수 있습니다.
+          </p>
+          <div className={styles.kakaoStatus}>
+            <span
+              className={
+                kakaoStatus.connected ? styles.connected : styles.disconnected
+              }
+            >
+              {kakaoStatus.connected ? "연동됨" : "연동 안됨"}
+            </span>
+            {!kakaoStatus.connected && (
+              <button
+                type="button"
+                onClick={handleKakaoLogin}
+                className={styles.kakaoBtn}
+              >
+                <img src="kakao_login_large_narrow.png" alt="" />
+              </button>
+            )}
+            {kakaoStatus.connected && (
+              <>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await fetch("http://localhost:8000/kakao/logout", {
+                        method: "POST",
+                      });
+                      fetchKakaoStatus(); // 상태 새로고침
+                    } catch (err) {
+                      console.error("로그아웃 실패:", err);
+                    }
+                  }}
+                  className={styles.logoutBtn}
+                >
+                  연동 해제
+                </button>
+                <button
+                  type="button"
+                  onClick={fetchKakaoStatus}
+                  className={styles.refreshBtn}
+                >
+                  <TiRefreshOutline />
+                </button>
+              </>
+            )}
+          </div>
         </section>
 
         {/* 얼굴 등록 */}

@@ -14,8 +14,9 @@
 
 body {
   padding-left: 0;
+  padding-top: 60px; // 네비바 높이(60px) + 여백
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: #e4e4e4fe;
   transition: background-color 0.3s ease;
 
   &.dark-mode {

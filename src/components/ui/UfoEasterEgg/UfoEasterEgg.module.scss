@@ -1,0 +1,37 @@
+.ufoContainer {
+  position: fixed;
+  top: 15%;
+  width: 150px;
+  height: 150px;
+  pointer-events: none;
+  z-index: 0;
+
+  // 시작 위치: 화면 왼쪽 바깥
+  left: -150px;
+
+  // 애니메이션 시작 전 상태
+  opacity: 0;
+
+  &.flying {
+    opacity: 1;
+    animation: flyAcross 8s linear forwards;
+  }
+}
+
+// 왼쪽에서 오른쪽으로 천천히 지나가는 애니메이션
+@keyframes flyAcross {
+  0% {
+    left: -150px;
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(100vw + 50px);
+    opacity: 0;
+  }
+}

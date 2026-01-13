@@ -12,9 +12,14 @@ AI 기반 배회자 감지 및 알림 시스템
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
+from pathlib import Path
+
+# .env 파일 로드 (반드시 다른 import 전에!)
+load_dotenv()
+
 from app.routers import auth, security, kakao
 from app.database import init_db
-from pathlib import Path
 
 
 # ============================================

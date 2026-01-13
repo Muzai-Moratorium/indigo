@@ -22,6 +22,8 @@ from app.utils.face_recognition_module import FaceRecognitionWhitelist
 from app.services import ai_model_service
 from app.services import mediapipe_service
 from app.services import tracker_service
+from app.routers import kakao  # 카카오 알림 연동
+import asyncio
 
 router = APIRouter(prefix="/security", tags=["security"])
 
@@ -43,6 +45,14 @@ async def websocket_endpoint(ws: WebSocket):
 
     frame_count = 0
     start_time = time.time()
+    
+    # [학습 포인트: 상태 관리]
+    # - 화재/연기는 "순간적 오탐"이 많으므로 5초 이상 지속될 때만 알림을 보냅니다.
+    # - 이를 위해 각 위험 요소(fire, smoke)별로 "언제 처음 감지됐는지(start_time)"를 기록합니다.
+    hazard_states = {
+        "fire": {"start_time": None, "notified": False},
+        "smoke": {"start_time": None, "notified": False}
+    }
 
     try:
         while True:
@@ -81,12 +91,13 @@ async def websocket_endpoint(ws: WebSocket):
 
                 # 클래스별 조건 분기 처리
                 alerts = []
+                detected_hazards = {}  # 이번 프레임의 위험 요소 {label: max_score}
                 for pred in predictions:
                     label = pred['label']
                     score = pred['score']
                     box = pred['box']
                     
-                    if label == 'person' and score >= 0.5:
+                    if label == 'person' and score >= 0.6:
                         # 사람만 얼굴 인식 + 배회자 추적 + 이상행동 감지
                         track_id = tracker_service.match_detection_to_tracker(box)
                         loiter_result = tracker_service.check_loitering(
@@ -106,6 +117,10 @@ async def websocket_endpoint(ws: WebSocket):
                                     "box": box
                                 }
                                 alerts.append(alert)
+                                
+                                # 카카오 알림 (이상행동) - 비동기로 전송하여 영상 처리 지연 방지
+                                asyncio.create_task(kakao.notify_loitering(track_id, loiter_result.get("elapsed", 0.0)))
+                                
                             elif loiter_result["type"] == "loitering":
                                 alert = {
                                     "type": "loitering",
@@ -113,6 +128,9 @@ async def websocket_endpoint(ws: WebSocket):
                                     "box": box
                                 }
                                 alerts.append(alert)
+                                
+                                # 카카오 알림 (배회자) - 비동기로 전송
+                                asyncio.create_task(kakao.notify_loitering(track_id, loiter_result.get("elapsed", 0.0)))
                     elif label in ['fire', 'smoke']:
                         # 화재/연기는 즉시 경보
                         print(f"[DANGER] 위험 감지: {label} (Score: {score:.2f})")
@@ -121,9 +139,67 @@ async def websocket_endpoint(ws: WebSocket):
                             "box": box,
                             "score": score
                         })
+                        
+                        # 지속적인 화재 감지를 위해 기록 (신뢰도 50% 이상)
+                        # [학습 포인트: 오탐 방지]
+                        # - 신뢰도(score)가 0.5(50%) 이상인 경우만 위험 상황으로 간주합니다.
+                        # - 너무 낮은 신뢰도는 쓰레기통, 노란 옷 등을 불로 착각할 수 있기 때문입니다.
+                        if score >= 0.5:
+                            if label not in detected_hazards or score > detected_hazards[label]:
+                                detected_hazards[label] = score
                 
                 # 오래된 트래커 정리
                 tracker_service.cleanup_old_trackers()
+
+                # ─────────────────────────────────────────────
+                # 화재/연기 지속 시간 체크 (5초 이상)
+                # ─────────────────────────────────────────────
+                # [학습 포인트: 지속 시간 체크 로직]
+                # 1. 이번 프레임에 감지됨 -> 시작 시간이 없으면 현재 시간 기록 (start_time = now)
+                # 2. 이번 프레임에 감지됨 -> 시작 시간이 있으면 경과 시간(elapsed) 계산
+                # 3. 경과 시간이 5초 넘음 + 아직 알림 안 보냄 -> 카카오 알림 전송!
+                # 4. 감지 안 됨 -> 시작 시간 초기화 (가짜 화재였거나 상황 종료)
+                
+                now = time.time()
+                for h_type in ["fire", "smoke"]:
+                    if h_type in detected_hazards:
+                        # 처음 감지된 경우 시간 기록
+                        if hazard_states[h_type]["start_time"] is None:
+                            hazard_states[h_type]["start_time"] = now
+                            print(f"[Hazard] {h_type} 감지 시작... (Score: {detected_hazards[h_type]:.2f})")
+                        
+                        # 지속 시간 계산
+                        elapsed_hazard = now - hazard_states[h_type]["start_time"]
+                        
+                        # 5초 이상이고 아직 알림 안 보냈으면 전송
+                        if elapsed_hazard >= 5.0 and not hazard_states[h_type]["notified"]:
+                            print(f"[ALERT] {h_type} 5초 이상 지속됨! 카카오 알림 전송")
+                            asyncio.create_task(kakao.notify_hazard(
+                                h_type, 
+                                detected_hazards[h_type], 
+                                elapsed_hazard
+                            ))
+                            hazard_states[h_type]["notified"] = True
+                            
+                            # 스냅샷 저장 (화재)
+                            try:
+                                from app.services.database_service import save_snapshot
+                                save_snapshot(
+                                    frame, 
+                                    detected_hazards[h_type], 
+                                    [0,0,0,0], # 박스 정보는 임의로 처리 (전체 화면 위험)
+                                    stay_duration=elapsed_hazard, 
+                                    is_loitering=True # 위험 상황으로 저장
+                                )
+                            except Exception as e:
+                                print(f"스냅샷 저장 실패: {e}")
+
+                    else:
+                        # 감지 안 됨 -> 상태 초기화
+                        if hazard_states[h_type]["start_time"] is not None:
+                            print(f"[Hazard] {h_type} 상황 종료.")
+                        hazard_states[h_type]["start_time"] = None
+                        hazard_states[h_type]["notified"] = False
 
                 # 결과 전송
                 await ws.send_json({

@@ -27,6 +27,21 @@ export function DarkModeProvider({ children }) {
     } else {
       document.body.classList.remove("dark-mode");
     }
+
+    // [Step] 백엔드로 테마 상태 전송 (카카오톡 메시지 테마 변경용)
+    const syncThemeToBackend = async () => {
+      try {
+        const theme = isDarkMode ? "nyang" : "mung";
+        await fetch(`http://localhost:8000/kakao/theme?theme=${theme}`, {
+          method: "POST",
+        });
+        console.log(`[Theme] 백엔드 테마 동기화: ${theme}`);
+      } catch (err) {
+        console.error("[Theme] 백엔드 테마 동기화 실패:", err);
+      }
+    };
+
+    syncThemeToBackend();
   }, [isDarkMode, isInitialized]);
 
   const toggleDarkMode = () => {

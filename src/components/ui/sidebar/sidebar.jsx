@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CiSearch } from "react-icons/ci";
 import { useAuth } from "../../../context/AuthContext";
 import DayNightToggle from "../darkmodeBtn/DayNightToggle";
+import { PiHamburgerBold } from "react-icons/pi";
 
 const MENU_ITEMS = [
   { name: "홈", path: "/" },
@@ -21,26 +22,17 @@ function Sidebar() {
 
   return (
     <>
-      {/* 햄버거 버튼 (모바일) */}
       <button className={styles.menuButton} onClick={toggleMenu}>
-        ☰
+        <PiHamburgerBold />
       </button>
 
-      {/* 오버레이 (모바일) */}
       <div
         className={`${styles.overlay} ${isOpen ? styles.open : ""}`}
         onClick={closeMenu}
       />
 
-      {/* 사이드바 */}
       <div className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
         <h1 className={styles.title}>반응형테스트</h1>
-        <form action="search">
-          <input type="text" name="search" />
-          <button type="submit">
-            <CiSearch />
-          </button>
-        </form>
         <nav>
           <ul className={styles.navList}>
             {MENU_ITEMS.map((item) => (
@@ -55,7 +47,6 @@ function Sidebar() {
               </li>
             ))}
 
-            {/* 인증 상태에 따른 메뉴 */}
             {!loading && (
               <>
                 {user ? (
@@ -108,7 +99,6 @@ function Sidebar() {
           </ul>
         </nav>
 
-        {/* 다크모드 토글 - 하단 */}
         <div className={styles.toggleWrapper}>
           <DayNightToggle />
         </div>
