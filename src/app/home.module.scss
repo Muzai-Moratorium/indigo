@@ -198,3 +198,12 @@
     transform: translateX(-80px);
   }
 }
+
+.maintext {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 100px;
+  font-weight: bold;
+  margin-bottom: 80vh;
+}

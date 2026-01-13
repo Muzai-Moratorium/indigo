@@ -6,7 +6,7 @@ YOLO11n(객체 감지) + MediaPipe Pose(관절 추출) 하이브리드 방식
 주요 기능:
 - 실시간 CCTV 영상 분석 (WebSocket)
 - 사람/화재/연기 감지 (YOLO11n)
-- 배회자 추적 및 알림
+- 거수자 추적 및 알림
 - 이상행동 감지 (MediaPipe Pose)
 - 얼굴 인식 화이트리스트
 - 동적 모델 변경 API
@@ -104,8 +104,13 @@ async def websocket_endpoint(ws: WebSocket):
                             track_id, box, frame, score, face_whitelist
                         )
                         
-                        # 배회자이면 관절 정보 추가
+                        # 프론트엔드에서 구분할 수 있도록 track_id 추가
+                        pred["track_id"] = track_id
+                        
+                        # 배회자이면 관절 정보 및 배회자 플래그 추가
                         if loiter_result:
+                            pred["is_loitering"] = True  # 배회자 플래그
+                            
                             if loiter_result.get("keypoints"):
                                 pred["keypoints"] = loiter_result["keypoints"]
                             
@@ -131,6 +136,8 @@ async def websocket_endpoint(ws: WebSocket):
                                 
                                 # 카카오 알림 (배회자) - 비동기로 전송
                                 asyncio.create_task(kakao.notify_loitering(track_id, loiter_result.get("elapsed", 0.0)))
+                        else:
+                            pred["is_loitering"] = False  # 일반인
                     elif label in ['fire', 'smoke']:
                         # 화재/연기는 즉시 경보
                         print(f"[DANGER] 위험 감지: {label} (Score: {score:.2f})")

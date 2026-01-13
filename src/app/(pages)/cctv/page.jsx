@@ -271,19 +271,41 @@ function DetectorPage() {
           const label = prediction.label;
           const score = prediction.score;
 
-          // 클래스별 색상/스타일 결정 (화재/연기는 빨간색 강조)
+          // 클래스별 색상/스타일 결정
           const isDanger = label === "fire" || label === "smoke";
-          const color = isDanger ? "#FF0000" : "#00FF00";
-          const lineWidth = isDanger ? 4 : 2;
+          const isLoitering = prediction.is_loitering === true;
+          const trackId = prediction.track_id;
+
+          // 색상: 화재/연기=빨강, 거수자=주황, 일반인=녹색
+          let color = "#00FF00"; // 기본: 녹색 (일반인)
+          if (isDanger) {
+            color = "#FF0000"; // 빨강 (화재/연기)
+          } else if (isLoitering) {
+            color = "#FFA500"; // 주황 (거수자)
+          }
+          const lineWidth = isDanger || isLoitering ? 4 : 2;
 
           // 박스 그리기
           ctx.strokeStyle = color;
           ctx.lineWidth = lineWidth;
+
+          // 거수자/화재는 깜빡이는 점선 박스
+          if (isLoitering || isDanger) {
+            ctx.setLineDash([10, 5]);
+          }
           ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+          ctx.setLineDash([]); // 점선 초기화
 
           // 라벨을 박스 안쪽 상단에 표시
           ctx.font = "bold 14px Arial";
-          const text = `${label} ${(score * 100).toFixed(0)}%`;
+          // 거수자/일반인 구분 + track_id 표시
+          let displayLabel = label;
+          if (label === "person" && trackId !== undefined) {
+            displayLabel = isLoitering
+              ? `거수자 #${trackId}`
+              : `사람 #${trackId}`;
+          }
+          const text = `${displayLabel} ${(score * 100).toFixed(0)}%`;
           const textWidth = ctx.measureText(text).width;
 
           // 라벨 배경
@@ -291,8 +313,19 @@ function DetectorPage() {
           ctx.fillRect(x1, y1, textWidth + 8, 20);
 
           // 라벨 텍스트
-          ctx.fillStyle = isDanger ? "white" : "black";
+          ctx.fillStyle = isDanger || isLoitering ? "white" : "black";
           ctx.fillText(text, x1 + 4, y1 + 15);
+
+          // 거수자 경고 표시 (화재처럼 박스 상단에 경고 라벨)
+          if (isLoitering) {
+            const warningText = "⚠️ 거수자 주의!";
+            ctx.font = "bold 16px Arial";
+            const warningWidth = ctx.measureText(warningText).width;
+            ctx.fillStyle = "#FFA500";
+            ctx.fillRect(x1, y1 - 28, warningWidth + 12, 26);
+            ctx.fillStyle = "white";
+            ctx.fillText(warningText, x1 + 6, y1 - 10);
+          }
 
           // 키포인트 그리기 (MediaPipe Pose 33개)
           if (prediction.keypoints && prediction.keypoints.length >= 25) {

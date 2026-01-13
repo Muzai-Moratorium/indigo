@@ -3,6 +3,7 @@
 import "../styles/globals.scss";
 import styles from "./home.module.scss";
 import ScrollReveal from "../components/ui/ScrollReveal/ScrollReveal";
+import Homemaintext from "../components/ui/RotatingText/homemaintext";
 import { useDarkMode } from "../context/DarkModeContext";
 import dynamic from "next/dynamic";
 
@@ -152,6 +153,11 @@ export default function Page({ params }) {
             style={{ "--delay": star.delay, "--x": star.x, "--y": star.y }}
           />
         ))}
+      </div>
+      <div className={styles.maintext}>
+        <span>소중한</span>
+        <Homemaintext />
+        <span>지키고싶다면?</span>
       </div>
       <ScrollReveal
         baseOpacity={0}

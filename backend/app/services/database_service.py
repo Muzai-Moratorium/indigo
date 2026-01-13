@@ -9,6 +9,7 @@ import mysql.connector
 from datetime import datetime
 
 from app.utils.path_utils import CAPTURE_DIR
+from app.services import ai_model_service
 
 
 def save_to_database(image_path, score, track_id=0, stay_duration=0, is_loitering=False):
@@ -63,7 +64,7 @@ def save_snapshot(frame, score, box=None, track_id=0, stay_duration=0, is_loiter
     timestamp_file = now.strftime("%Y%m%d_%H%M%S")
     timestamp_display = now.strftime("%Y년 %m월 %d일 %H시 %M분 %S초")
     
-    prefix = "loitering" if is_loitering else "person"
+    prefix = "loiterer" if is_loitering else "person"
     filename = f"{prefix}_{timestamp_file}.jpg"
     filepath = os.path.join(CAPTURE_DIR, filename)
 
@@ -75,9 +76,10 @@ def save_snapshot(frame, score, box=None, track_id=0, stay_duration=0, is_loiter
         x1, y1, x2, y2 = box
         h, w = frame.shape[:2]
         
-        # 640x640 추론 좌표를 원본 프레임 좌표로 변환
-        scale_x = w / 640
-        scale_y = h / 640
+        # YOLO 추론 좌표를 원본 프레임 좌표로 변환
+        input_size = ai_model_service.get_input_size()  # 320 또는 640
+        scale_x = w / input_size
+        scale_y = h / input_size
         
         x1 = int(x1 * scale_x)
         y1 = int(y1 * scale_y)
@@ -103,7 +105,7 @@ def save_snapshot(frame, score, box=None, track_id=0, stay_duration=0, is_loiter
         if success:
             with open(filepath, 'wb') as f:
                 f.write(encoded.tobytes())
-            event_type = "[ALERT] Loitering" if is_loitering else "[INFO] Person"
+            event_type = "[ALERT] 거수자" if is_loitering else "[INFO] Person"
             print(f"{event_type} 캡처! 이미지 저장: {filename} | 체류: {stay_duration:.1f}초 | 시간: {timestamp_display}")
             save_to_database(filepath, score, track_id=track_id, stay_duration=stay_duration, is_loitering=is_loitering)
         else:

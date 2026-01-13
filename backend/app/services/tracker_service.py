@@ -1,16 +1,16 @@
 """
-Tracker Service - 객체 추적 및 배회자 감지
+Tracker Service - 객체 추적 및 거수자 감지
 ===========================================
-YOLO로 감지된 사람을 프레임 간 추적하고 배회자/이상행동을 감지
+YOLO로 감지된 사람을 프레임 간 추적하고 거수자/이상행동을 감지
 
 [핵심 개념]
 1. 객체 추적 (Object Tracking)
    - 문제: YOLO는 매 프레임 독립적으로 감지 → "같은 사람"인지 모름
    - 해결: IoU(박스 겹침) + 중심점 거리로 이전 프레임 객체와 매칭
 
-2. 배회자 감지 (Loitering Detection)
-   - 같은 위치에 일정 시간(5초) 이상 머무르면 배회자로 판정
-   - 화이트리스트(등록된 가족)는 배회자에서 제외
+2. 거수자 감지 (Loitering Detection)
+   - 같은 위치에 일정 시간(5초) 이상 머무르면 거수자로 판정
+   - 화이트리스트(등록된 가족)는 거수자에서 제외
 
 3. 이상행동 감지 (Abnormal Behavior Detection)
    - MediaPipe Pose로 관절 좌표 추출
@@ -31,9 +31,13 @@ from app.services.database_service import save_snapshot
 # 설정값 (Configuration)
 # ==================================================
 
-# 배회자 감지 설정
-LOITERING_TIME = 5.0       # 배회 기준 시간 (초) - 이 시간 이상 머무르면 배회자
+# 거수자 감지 설정
+LOITERING_TIME = 5.0       # 거수자 기준 시간 (초) - 이 시간 이상 머무르면 거수자
 TRACKER_TIMEOUT = 5.0      # 트래커 만료 시간 (초) - 이 시간 동안 안 보이면 삭제
+
+# ID 캡처 설정 (모든 감지된 사람 캡처)
+MAX_CAPTURES_PER_ID = 3                   # ID당 최대 캡처 수
+CAPTURE_INTERVALS = [0.0, 1.0, 2.0]       # 캡처 간격 (초): 즉시, 1초 후, 2초 후
 FACE_CHECK_INTERVAL = 30   # 얼굴 재검사 프레임 간격
 
 # 이상행동 감지 설정
@@ -290,16 +294,16 @@ def analyze_abnormal_behavior(keypoints, keypoints_history):
 
 
 # ==================================================
-# 배회자 판정 (메인 로직)
+# 거수자 판정 (메인 로직)
 # ==================================================
 def check_loitering(track_id, box, frame, score, face_whitelist):
     """
-    배회자 판정 및 이상행동 감지
+    거수자 판정 및 이상행동 감지
     
     [판정 흐름]
     1. 새로운 사람 → 얼굴 인식으로 화이트리스트 체크
-    2. 화이트리스트 → 배회자 판정 안 함
-    3. 5초 이상 체류 → 배회자로 판정 + MediaPipe 적용
+    2. 화이트리스트 → 거수자 판정 안 함
+    3. 5초 이상 체류 → 거수자로 판정 + MediaPipe 적용
     4. 이상행동 감지 → 추가 알림
     
     Args:
@@ -325,15 +329,25 @@ def check_loitering(track_id, box, frame, score, face_whitelist):
         _active_trackers[track_id] = {
             "start_time": now,           # 첫 감지 시간
             "last_seen": now,            # 마지막 감지 시간
-            "notified": False,           # 배회 알림 발송 여부
+            "notified": False,           # 거수자 알림 발송 여부
             "box": box,                  # 현재 바운딩 박스
             "is_whitelisted": is_whitelisted,     # 화이트리스트 여부
             "whitelist_name": whitelist_name or "",  # 등록된 이름
             "face_checked": True,        # 얼굴 검사 완료 여부
             "keypoints_history": [],     # 관절 좌표 히스토리
             "abnormal_notified": False,  # 이상행동 알림 발송 여부
-            "last_keypoints": None       # 마지막 관절 좌표 (캐싱)
+            "last_keypoints": None,      # 마지막 관절 좌표 (캐싱)
+            "capture_count": 0,          # ID 캡처 횟수 (최대 3장)
+            "capture_times": []          # 캡처 시점 기록
         }
+        
+        # 첫 번째 캡처 (즉시 - 화이트리스트 제외)
+        if not is_whitelisted:
+            save_snapshot(frame, score, box, track_id=track_id, 
+                         stay_duration=0, is_loitering=False)
+            _active_trackers[track_id]["capture_count"] = 1
+            _active_trackers[track_id]["capture_times"].append(now)
+            print(f"[Capture] ID {track_id} - 1/{MAX_CAPTURES_PER_ID}장 캡처 완료")
         
         if is_whitelisted:
             print(f"[Whitelist] 등록된 사용자 감지: {whitelist_name} (ID: {track_id})")
@@ -348,7 +362,7 @@ def check_loitering(track_id, box, frame, score, face_whitelist):
         tracker["last_seen"] = now
         tracker["box"] = box
         
-        # 화이트리스트 사용자는 배회자 판정 스킵
+        # 화이트리스트 사용자는 거수자 판정 및 캡처 스킵
         if tracker.get("is_whitelisted"):
             return None
         
@@ -356,7 +370,20 @@ def check_loitering(track_id, box, frame, score, face_whitelist):
         elapsed = now - tracker["start_time"]
         
         # ─────────────────────────────────────────
-        # 배회자(5초+)에게 MediaPipe 적용
+        # ID 캡처 (3장까지 - 0초, 1초, 2초 간격)
+        # ─────────────────────────────────────────
+        capture_count = tracker.get("capture_count", 0)
+        if capture_count < MAX_CAPTURES_PER_ID:
+            next_capture_time = CAPTURE_INTERVALS[capture_count]
+            if elapsed >= next_capture_time:
+                save_snapshot(frame, score, box, track_id=track_id, 
+                             stay_duration=elapsed, is_loitering=False)
+                tracker["capture_count"] = capture_count + 1
+                tracker["capture_times"].append(now)
+                print(f"[Capture] ID {track_id} - {capture_count + 1}/{MAX_CAPTURES_PER_ID}장 캡처 완료")
+        
+        # ─────────────────────────────────────────
+        # 거수자(5초+)에게 MediaPipe 적용
         # ─────────────────────────────────────────
         keypoints = None
         if elapsed >= LOITERING_TIME and mediapipe_service.is_enabled():
@@ -384,16 +411,16 @@ def check_loitering(track_id, box, frame, score, face_whitelist):
                     return {"type": "abnormal", "behaviors": abnormal, "keypoints": keypoints}
         
         # ─────────────────────────────────────────
-        # 첫 배회 판정 (5초 경과)
+        # 첫 거수자 판정 (5초 경과)
         # ─────────────────────────────────────────
         if not tracker["notified"] and elapsed >= LOITERING_TIME:
-            print(f"[ALERT] 배회자 감지 ID: {track_id} - {elapsed:.1f}초 체류!")
+            print(f"[ALERT] 거수자 감지 ID: {track_id} - {elapsed:.1f}초 체류!")
             save_snapshot(frame, score, box, track_id=track_id, 
                          stay_duration=elapsed, is_loitering=True)
             tracker["notified"] = True
             return {"type": "loitering", "keypoints": keypoints, "elapsed": elapsed}
         
-        # 이미 배회자로 판정된 경우 → 관절 정보만 반환
+        # 이미 거수자로 판정된 경우 → 관절 정보만 반환
         if tracker["notified"] and keypoints:
             return {"type": "tracking", "keypoints": keypoints}
     
