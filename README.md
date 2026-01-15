@@ -1,7 +1,7 @@
-# 🏠 Guardian Home Protection System
+# 🏠 YoloMung / YoloNyang  Home Protection System
 
 > **최종 업데이트**: 2026년 1월 13일  
-> **프로젝트명**: YoloMung / YoloNyang (다크모드 전환)
+> **프로젝트명**: YoloMung / YoloNyang 
 
 실시간 CCTV 영상 분석을 통한 스마트 홈 보안 시스템
 
@@ -49,8 +49,9 @@ Motion (Framer Motion)
 
 ```
 FastAPI + Python
-ONNX Runtime (OpenVINO)
-MediaPipe Pose
+ONNX Runtime
+OpenVINO
+MediaPipePose
 MySQL
 ```
 
@@ -58,7 +59,7 @@ MySQL
 
 | 모델                  | 입력 크기 | 클래스              |
 | --------------------- | --------- | ------------------- |
-| `best.onnx` (커스텀)  | 320x320   | person, fire, smoke |
+| `best.bin` (커스텀)  | 320x320   | person, fire, smoke |
 | `yolo11n.onnx` (기본) | 640x640   | COCO 80 클래스      |
 
 ---
